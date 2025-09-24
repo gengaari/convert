@@ -1,0 +1,95 @@
+﻿@page
+@model WebApplication9.Pages.IndexModel
+@using System.Globalization
+@{
+    Layout = null;
+
+    // Курс валют — захардкоженный (для примера)
+    var rates = new Dictionary<string, decimal>
+    {
+        { "USD", 1.0m },   // базовая
+        { "EUR", 0.92m },
+        { "UAH", 41.0m },
+        { "GBP", 0.80m }
+    };
+
+    string from = Request.Query["from"];
+    string to = Request.Query["to"];
+    string amountStr = Request.Query["amount"];
+
+    decimal result = 0;
+    bool hasResult = false;
+
+    if (!string.IsNullOrEmpty(amountStr) && !string.IsNullOrEmpty(from) && !string.IsNullOrEmpty(to))
+    {
+        if (decimal.TryParse(amountStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amount))
+        {
+            if (rates.ContainsKey(from) && rates.ContainsKey(to))
+            {
+                result = amount * (rates[to] / rates[from]);
+                hasResult = true;
+            }
+        }
+    }
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Конвертер валют</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, select, button {
+            padding: 5px;
+            margin: 5px;
+        }
+        .result {
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h2>Конвертация валют</h2>
+
+    <form method="get">
+        <input type="number" step="0.01" name="amount" placeholder="Сумма" value="@amountStr" required />
+
+        <select name="from">
+            @foreach (var rate in rates.Keys)
+            {
+                <option value="@rate" selected="@(from == rate)">
+                    @rate
+                </option>
+            }
+        </select>
+
+        <span>→</span>
+
+        <select name="to">
+            @foreach (var rate in rates.Keys)
+            {
+                <option value="@rate" selected="@(to == rate)">
+                    @rate
+                </option>
+            }
+        </select>
+
+        <button type="submit">Конвертировать</button>
+    </form>
+
+    @if (hasResult)
+    {
+        <div class="result">
+            Результат: @amountStr @from = @result.ToString("0.00") @to
+        </div>
+    }
+</body>
+</html>
